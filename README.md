@@ -2,22 +2,6 @@
 
 Выполнены практические задания по курсу **«Технологии разработки серверных приложений»**.
 
----
-
-## Структура репозитория
-КР4/
-├── 9_1/
-Миграции базы данных (Alembic, SQLAlchemy, PostgreSQL)
-├── 10_1/
-Пользовательская обработка ошибок (кастомные исключения)
-├── 10_2/
-Валидация данных и RequestValidationError
-├── 11_1/
-Модульные тесты (pytest, TestClient, in-memory хранилище)
-├── 11_2/
-Асинхронные тесты (httpx.AsyncClient, ASGITransport, Faker)
-└── README.md
----
 
 ## Задание 9.1 – Миграции базы данных
 
@@ -31,21 +15,6 @@
 - В модель добавлено новое поле `description` (`NOT NULL`, значение по умолчанию — пустая строка)
 - Сгенерирована и применена вторая миграция
 
-**Запуск (из папки `9_1`):**
-bash
-Создать виртуальное окружение и установить зависимости
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-или вручную: fastapi sqlalchemy alembic psycopg2-binary uvicorn python-dotenv
-Настроить .env (пример):
-DATABASE_URL=postgresql://user:pass@localhost:5432/kr4_products
-Выполнить миграции
-alembic upgrade head
-Заполнить данными
-python seed.py
-Запустить сервер
-uvicorn app.main:app --reload
 ---
 
 ## Задание 10.1 – Кастомная обработка ошибок
