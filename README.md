@@ -1,0 +1,139 @@
+# Контрольная работа №4 (ТРСП)
+
+Выполнены практические задания по курсу **«Технологии разработки серверных приложений»**.
+
+---
+
+## Структура репозитория
+КР4/
+├── 9_1/
+Миграции базы данных (Alembic, SQLAlchemy, PostgreSQL)
+├── 10_1/
+Пользовательская обработка ошибок (кастомные исключения)
+├── 10_2/
+Валидация данных и RequestValidationError
+├── 11_1/
+Модульные тесты (pytest, TestClient, in-memory хранилище)
+├── 11_2/
+Асинхронные тесты (httpx.AsyncClient, ASGITransport, Faker)
+└── README.md
+---
+
+## Задание 9.1 – Миграции базы данных
+
+**Технологии:** FastAPI, SQLAlchemy, Alembic, PostgreSQL, python-dotenv.
+
+**Выполнено:**
+
+- Создана модель `Product` (`id`, `title`, `price`, `count`)
+- Настроен Alembic, сгенерирована и применена первая миграция (создание таблицы `products`)
+- Добавлены две записи через `seed.py`
+- В модель добавлено новое поле `description` (`NOT NULL`, значение по умолчанию — пустая строка)
+- Сгенерирована и применена вторая миграция
+
+**Запуск (из папки `9_1`):**
+bash
+Создать виртуальное окружение и установить зависимости
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+или вручную: fastapi sqlalchemy alembic psycopg2-binary uvicorn python-dotenv
+Настроить .env (пример):
+DATABASE_URL=postgresql://user:pass@localhost:5432/kr4_products
+Выполнить миграции
+alembic upgrade head
+Заполнить данными
+python seed.py
+Запустить сервер
+uvicorn app.main:app --reload
+---
+
+## Задание 10.1 – Кастомная обработка ошибок
+
+**Технологии:** FastAPI, HTTPException, Pydantic.
+
+**Выполнено:**
+
+- Созданы два кастомных исключения: `CustomExceptionA` (404) и `CustomExceptionB` (403)
+- Зарегистрированы обработчики через `@app.exception_handler`
+- Определена единая Pydantic-модель `ErrorResponse` для ответов об ошибках
+- Реализованы эндпоинты:
+  - `/items/{item_id}` — бросает `CustomExceptionA` при `item_id == 42`
+  - `/access/{user_role}` — бросает `CustomExceptionB` при роли, отличной от `admin`
+- Тестирование через Postman / curl
+
+**Запуск (из папки `10_1`):**
+bash
+uvicorn main:app --reload
+**Пример запроса с ошибкой:**
+bash
+curl -X GET "http://127.0.0.1:8000/items/42"
+---
+
+## Задание 10.2 – Валидация данных и обработка RequestValidationError
+
+**Технологии:** FastAPI, Pydantic (`conint`, `EmailStr`, `constr`), email-validator.
+
+**Выполнено:**
+
+- Модель `User` с валидацией:
+  - `username: str`
+  - `age: conint(gt=18)`
+  - `email: EmailStr`
+  - `password: constr(min_length=8, max_length=16)`
+  - `phone: Optional[str] = 'Unknown'`
+- Кастомный обработчик `RequestValidationError` возвращает детальные ошибки (поле, сообщение, тип) и исходное тело запроса
+- Эндпоинт `POST /users/` принимает данные пользователя, валидация происходит автоматически
+
+**Запуск (из папки `10_2`):**
+bash
+uvicorn main:app --reload
+**Пример некорректного запроса:**
+http
+POST /users/
+{
+  "username": "young",
+  "age": 18,
+  "email": "not_an_email",
+  "password": "123"
+}
+---
+
+## Задание 11.1 – Модульные тесты для FastAPI
+
+**Технологии:** pytest, TestClient, in-memory словарь как хранилище.
+
+**Выполнено:**
+
+- FastAPI-приложение с тремя эндпоинтами (`POST /users/`, `GET /users/{id}`, `DELETE /users/{id}`)
+- Хранилище — словарь `fake_db`, счётчик `current_id`
+- Написаны тесты (7 штук) с использованием `TestClient`:
+  - успешное создание, получение, удаление
+  - ошибки 404 для несуществующего пользователя
+  - валидация входных данных (отсутствие обязательных полей → `422`)
+- Тесты проходят, состояние хранилища очищается перед каждым тестом (фикстура `clean_db`)
+
+**Запуск (из папки `11_1`):**
+bash
+pytest
+---
+
+## Задание 11.2 – Асинхронные тесты с httpx.AsyncClient и Faker
+
+**Технологии:** pytest-asyncio, httpx.AsyncClient, ASGITransport, Faker.
+
+**Выполнено:**
+
+- Использовано FastAPI-приложение из задания 11.1 (три эндпоинта)
+- Асинхронные тесты (декоратор `@pytest.mark.asyncio`)
+- Клиент `httpx.AsyncClient` с `ASGITransport` (тесты не поднимают реальный сервер)
+- Генерация случайных данных через библиотеку `Faker`
+- Полная изоляция состояния между тестами (очистка `db` и сброс счётчика `ID`)
+- Покрыты успешные и ошибочные сценарии для всех трёх эндпоинтов
+
+**Запуск (из папки `11_2`):**
+bash
+pytest
+**Установка зависимостей для 11.2:**
+bash
+pip install fastapi uvicorn pytest pytest-asyncio httpx Faker
